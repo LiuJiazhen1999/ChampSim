@@ -16,7 +16,8 @@ class BLOCK {
     int delta,
         depth,
         signature,
-        confidence;
+        confidence,
+	pref_class;
 
     uint64_t address,
              full_addr,
@@ -39,6 +40,7 @@ class BLOCK {
         depth = 0;
         signature = 0;
         confidence = 0;
+	pref_class = 0;
 
         address = 0;
         full_addr = 0;
@@ -83,7 +85,8 @@ class PACKET {
         delta,
         depth,
         signature,
-        confidence;
+        confidence,
+	late_pref;
 
     uint32_t pf_metadata;
 
@@ -126,6 +129,7 @@ class PACKET {
         fetched = 0;
         prefetched = 0;
         drc_tag_read = 0;
+	late_pref = 0;
 
         returned = 0;
         asid[0] = UINT8_MAX;

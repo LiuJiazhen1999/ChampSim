@@ -1,6 +1,9 @@
 #include "cache.h"
 #include "set.h"
 
+#define PREF_CLASS_MASK 0xF00
+#define NUM_OF_STRIDE_BITS 8
+
 uint64_t l2pf_access = 0;
 
 void CACHE::handle_fill()
@@ -152,6 +155,18 @@ void CACHE::handle_fill()
             // COLLECT STATS
             sim_miss[fill_cpu][MSHR.entry[mshr_index].type]++;
             sim_access[fill_cpu][MSHR.entry[mshr_index].type]++;
+
+	if (cache_type == IS_L1D)
+      	{
+        	if (MSHR.entry[mshr_index].late_pref == 1)
+        	{
+         	 int temp_pf_class = (MSHR.entry[mshr_index].pf_metadata & PREF_CLASS_MASK) >> NUM_OF_STRIDE_BITS;
+         	 if (temp_pf_class < 5)
+          	{
+           	 pref_late[cpu][((MSHR.entry[mshr_index].pf_metadata & PREF_CLASS_MASK) >> NUM_OF_STRIDE_BITS)]++;
+          	}
+        	}
+      	}
 
             fill_cache(set, way, &MSHR.entry[mshr_index]);
 
@@ -617,6 +632,10 @@ void CACHE::handle_read()
                 if (block[set][way].prefetch) {
                     pf_useful++;
                     block[set][way].prefetch = 0;
+		    if (block[set][way].pref_class < 5) //modify
+          	    {
+           		 pref_useful[cpu][block[set][way].pref_class]++;
+          	    }
                 }
                 block[set][way].used = 1;
 
@@ -769,6 +788,11 @@ void CACHE::handle_read()
                             MSHR.entry[mshr_index].returned = prior_returned;
                             MSHR.entry[mshr_index].event_cycle = prior_event_cycle;
                         }
+
+			if (cache_type == IS_L1D)
+            		{
+              			MSHR.entry[mshr_index].late_pref = 1;
+            		}
 
                         MSHR_MERGED[RQ.entry[index].type]++;
 
@@ -1095,8 +1119,19 @@ void CACHE::fill_cache(uint32_t set, uint32_t way, PACKET *packet)
     block[set][way].prefetch = (packet->type == PREFETCH) ? 1 : 0;
     block[set][way].used = 0;
 
-    if (block[set][way].prefetch)
-        pf_fill++;
+    block[set][way].pref_class = ((packet->pf_metadata & PREF_CLASS_MASK) >> NUM_OF_STRIDE_BITS); //modify
+
+    if (block[set][way].prefetch) //modify
+    {
+    	pf_fill++;
+    	if (cache_type == IS_L1D)
+    	{
+      	if (block[set][way].pref_class < 5)
+      	{
+       	 pref_filled[cpu][block[set][way].pref_class]++;
+      	}
+    	}
+    }
 
     block[set][way].delta = packet->delta;
     block[set][way].depth = packet->depth;

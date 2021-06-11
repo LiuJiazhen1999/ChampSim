@@ -109,7 +109,10 @@ class CACHE : public MEMORY {
              sim_miss[NUM_CPUS][NUM_TYPES],
              roi_access[NUM_CPUS][NUM_TYPES],
              roi_hit[NUM_CPUS][NUM_TYPES],
-             roi_miss[NUM_CPUS][NUM_TYPES];
+             roi_miss[NUM_CPUS][NUM_TYPES],
+	     pref_useful[NUM_CPUS][6],
+             pref_filled[NUM_CPUS][6],
+             pref_late[NUM_CPUS][6];
 
     uint64_t total_miss_latency;
     
@@ -140,6 +143,16 @@ class CACHE : public MEMORY {
                 roi_access[i][j] = 0;
                 roi_hit[i][j] = 0;
                 roi_miss[i][j] = 0;
+            }
+        }
+
+	for (uint32_t i = 0; i < NUM_CPUS; i++)
+        {
+            for (uint32_t j = 0; j < 6; j++)
+            {
+                pref_useful[i][j] = 0;
+                pref_filled[i][j] = 0;
+                pref_late[i][j] = 0;
             }
         }
 
